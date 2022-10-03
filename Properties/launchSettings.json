@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "AF_Binding": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7272",
+      "launchBrowser": false
+    }
+  }
+}
