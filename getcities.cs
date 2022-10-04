@@ -22,7 +22,7 @@ namespace Company.Function
             log.LogInformation("C# HTTP trigger with SQL Input Binding function processed a request.");
 
             var jresult = new {
-                cities = new{result}
+                cities = result
             };
 
             return new OkObjectResult(jresult);
