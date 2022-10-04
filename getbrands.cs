@@ -20,7 +20,11 @@ namespace Company.Function
         {
             log.LogInformation("C# HTTP trigger with SQL Input Binding function processed a request.");
 
-            return new OkObjectResult(result);
+            var jresult = new {
+                brands = new{result}
+            };
+
+            return new OkObjectResult(jresult);
         }
     }
 }
