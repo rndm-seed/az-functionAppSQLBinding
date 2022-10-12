@@ -1,35 +1,47 @@
 using System;
-using System.IO;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Company.Function
 {
     public static class ownerlist
     {
-        [FunctionName("ownerlist")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+        // Visit https://aka.ms/sqlbindingsinput to learn how to use this input binding
+    [FunctionName("ownerlist")]
+         public static IActionResult Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [Sql("SELECT * FROM [dbo].[owners]",
+            CommandType = System.Data.CommandType.Text,
+            ConnectionStringSetting = "SqlConnectionString")] IEnumerable<Owner> result,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            log.LogInformation("C# HTTP trigger with SQL Input Binding function processed a request.");
 
-            string name = req.Query["name"];
+            foreach (Owner r in result){
+                //r.trackList.Add(new Object());
+            }
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            var jresult = new {
+                ownerList = result
+            };
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
+            return new OkObjectResult(jresult);
         }
+    }
+
+
+    public class Owner
+    {
+        public int id { get; set; }
+        public string vin { get; set; }
+        public string name { get; set; }
+        public string phone { get; set; }
+        public int district_id { get; set; }
+        public string detailed_address { get; set; }
+        public List<object> trackList { get; set; }
     }
 }

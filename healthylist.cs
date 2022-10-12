@@ -1,35 +1,67 @@
 using System;
-using System.IO;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Company.Function
 {
     public static class healthylist
     {
-        [FunctionName("healthylist")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+        // Visit https://aka.ms/sqlbindingsinput to learn how to use this input binding
+    [FunctionName("healthylist")]
+         public static IActionResult Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [Sql("select vin, avg(pressure) as pressure, avg(temperature) as temperature, avg(latitude) as latitude, avg(longitude) as longitude "
+            +"from [dbo].[sensor_data] "
+            +"where datetime in (select max(datetime) from [dbo].[sensor_data] group by vin) "
+            +"group by vin",
+            CommandType = System.Data.CommandType.Text,
+            ConnectionStringSetting = "SqlConnectionString")] IEnumerable<VinData> result,
             ILogger log)
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            log.LogInformation("C# HTTP trigger with SQL Input Binding function processed a request.");
 
-            string name = req.Query["name"];
+            var tempHealthyCount = 0;
+            var tempUnhealthyCount = 0;
+            var pressHealthyCount = 0;
+            var pressUnHealthyCount = 0;
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
+            foreach (var item in result){
+                if (item.pressure >= 220 && item.pressure < 270){
+                    pressHealthyCount++;
+                }else { 
+                    pressUnHealthyCount++;
+                }
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
+                if (item.temperature >= 30 && item.temperature < 80){
+                    tempHealthyCount++;
+                }else { 
+                    tempUnhealthyCount++;
+                }
+            }
 
-            return new OkObjectResult(responseMessage);
+            var jresult = new {
+                summary = new[]{
+                    new {
+                        type = "Pressure",
+                        healthy = pressHealthyCount,
+                        unhealthy = pressUnHealthyCount,
+                        nodata = 0
+                    },
+                    new {
+                        type = "Temperature",
+                        healthy = tempHealthyCount,
+                        unhealthy = tempUnhealthyCount,
+                        nodata = 0
+                    }
+                }
+            };
+
+            return new OkObjectResult(jresult);
         }
     }
+
 }

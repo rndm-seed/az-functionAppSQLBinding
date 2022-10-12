@@ -8,12 +8,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Company.Function
 {
-    public static class getbrands
+    public static class getcarsbybrandid
     {
-        [FunctionName("getbrands")]
-        public static IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "brands")] HttpRequest req,
-            [Sql("SELECT * FROM [dbo].[master_brands]",
+        // Visit https://aka.ms/sqlbindingsinput to learn how to use this input binding
+    [FunctionName("getcarsbybrandid")]
+         public static IActionResult Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+            [Sql("SELECT * FROM [dbo].[master_cars] where brand_id = @id",
+            Parameters = "@id = {Query.brandId}",
             CommandType = System.Data.CommandType.Text,
             ConnectionStringSetting = "SqlConnectionString")] IEnumerable<Object> result,
             ILogger log)
@@ -21,10 +23,11 @@ namespace Company.Function
             log.LogInformation("C# HTTP trigger with SQL Input Binding function processed a request.");
 
             var jresult = new {
-                brands = result
+                cars = result
             };
 
             return new OkObjectResult(jresult);
         }
+        
     }
 }

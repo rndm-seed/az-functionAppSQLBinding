@@ -13,7 +13,7 @@ namespace Company.Function
         // Visit https://aka.ms/sqlbindingsinput to learn how to use this input binding
     [FunctionName("getprovinces")]
          public static IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "provinces")] HttpRequest req,
             [Sql("SELECT * FROM [dbo].[master_provinces]",
             CommandType = System.Data.CommandType.Text,
             ConnectionStringSetting = "SqlConnectionString")] IEnumerable<Object> result,
